@@ -35,12 +35,14 @@ class AuthnetTransaction extends AuthnetAppModel {
 				'required' => false,
 				'allowEmpty' => true
 				),
+			/*
 			'notExpired' => array(
 				'rule' => array('notExpired', 'expiration'),
 				'message' => 'Credit card is expired according to date provided.',
 				'required' => false,
 				'allowEmpty' => true
 				)
+			*/
 			)
 
 		);
