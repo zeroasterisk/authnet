@@ -1,14 +1,33 @@
 <?php
-
+/**
+* Plugin model for "Authorize.Tet Credit Card Transaction Processing".
+*
+* @author Alan Blount <alan@zeroasterisk.com>
+* @link http://zeroasterisk.com
+* @copyright (c) 2010 Alan Blount
+* @license MIT License - http://www.opensource.org/licenses/mit-license.php
+*
+* @example
+	$saved = $this->AuthnetTransaction->save(array(
+		'amount' => 100,
+		'cc_account' => '000000000000000',
+		'cc_name' => 'john doe',
+		'cc_expires' => '11/11',
+	));
+	$transaction_id = $this->AuthnetTransaction->id;
+	debug($saved);
+	debug($transaction_id);
+	debug($this->AuthnetTransaction->log);
+*/
 class AuthnetTransaction extends AuthnetAppModel {
-
 	public $useDbConfig = 'authnet';
-
 	public $useTable = false;
 	public $primaryKey = 'transaction_id';
-
 	public $displayField = 'transaction_id';
-	
+	/**
+	* standard validate array
+	* @var array
+	*/
 	public $validate = array(
 		'amount' => array(
 			'numeric' => array(
@@ -19,7 +38,7 @@ class AuthnetTransaction extends AuthnetAppModel {
 				)
 			),
 		'card_number' => array(
-			/* 
+			/*
 			'cc' => array(
 				'rule' => array('cc', 'fast'),
 				'message' => 'Invalid credit card number.',
@@ -27,7 +46,7 @@ class AuthnetTransaction extends AuthnetAppModel {
 				'allowEmpty' => true
 				)
 			*/
-			), 
+			),
 		'expiration' => array(
 			'mmyyyy' => array(
 				'rule' => array('mmyyyy', 'expiration'),
@@ -46,8 +65,10 @@ class AuthnetTransaction extends AuthnetAppModel {
 			)
 
 		);
-
-	
+	/**
+	* standard beforeSave()
+	* @return bool
+	*/
 	public function beforeSave() {
 		if (!isset($this->data[$this->alias])) {
 			$this->data = array($this->alias => $this->data);
@@ -57,7 +78,10 @@ class AuthnetTransaction extends AuthnetAppModel {
 		}
 		return true;
 	}
-
+	/**
+	* Helper function to determine if CC expire format is correct
+	* @return bool
+	*/
 	public function mmyyyy($data) {
 		$value = preg_replace('/[^0-9]/', '', current($data));
 		if (strlen($value) == 4 || strlen($value) == 6) {
@@ -67,7 +91,10 @@ class AuthnetTransaction extends AuthnetAppModel {
 		}
 		return false;
 	}
-
+	/**
+	* Helper function to determine if CC has not expired
+	* @return bool
+	*/
 	public function notExpired($data) {
 		$value = preg_replace('/[^0-9]/', '', current($data));
 		if (strlen($value) > 6) {
@@ -82,18 +109,22 @@ class AuthnetTransaction extends AuthnetAppModel {
 		$epoch = strtotime("{$year}-{$month}-01");
 		return ($epoch > time());
 	}
-
+	/**
+	* Overwrite of the exists function, to be used for delete()
+	* @return bool
+	*/
 	public function exists() {
 		if (!empty($this->data)) {
 			if (!empty($this->data[$this->alias]['transaction_id'])) {
-				$this->__exists = true;
 				$this->id = $this->data[$this->alias]['transaction_id'];
-				return $this->__exists;
 			}
+		}
+		if (!empty($this->id)) {
+			$this->__exists = true;
+			return $this->__exists;
 		}
 		return false;
 	}
-	
 	/**
 	* Overwrite of the save() function
 	* we prepare for the repsonse array, and parse the status to see if it's an error or not
@@ -113,7 +144,6 @@ class AuthnetTransaction extends AuthnetAppModel {
 		$this->validationErrors[] = "unknown error";
 		return false;
 	}
-	
 	/**
 	* Overwrite of the delete() function
 	* we prepare for the repsonse array, and parse the status to see if it's an error or not
@@ -134,7 +164,6 @@ class AuthnetTransaction extends AuthnetAppModel {
 		$this->validationErrors[] = "unknown error";
 		return false;
 	}
-
 	/**
 	*
 	* listSources is included in the base DataSources class 1.3 at the moment, and so the scaffold
